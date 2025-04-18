@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% load my_filters %}
+
+{% block content %}
+    <div class="container mx-auto py-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Dispecher Buyurtmalari</h1>
+        <div class="overflow-x-auto">
+            <table class="table table-bordered w-full bg-white shadow-md rounded-lg table-accounting">
+                <thead>
+                <tr class="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+                    <th class="py-2 px-4 border-b">Buyurtma ID</th>
+                    <th class="py-2 px-4 border-b">Yo‘nalish</th>
+                    <th class="py-2 px-4 border-b">Mijoz</th>
+                    <th class="py-2 px-4 border-b">Dispecher Narxi</th>
+                    <th class="py-2 px-4 border-b">To‘lov Turi</th>
+                    <th class="py-2 px-4 border-b">Dispecher</th>
+                    <th class="py-2 px-4 border-b">Harakat</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for order in orders %}
+                    <tr class="border-b hover:bg-gray-50 transition-all duration-300">
+                        <td class="py-2 px-4 order-id clickable" data-label="Buyurtma ID">{{ order.order_id }}</td>
+                        <td class="py-2 px-4" data-label="Yo‘nalish">{{ order.qayerdan }} - {{ order.qayerga }}</td>
+                        <td class="py-2 px-4" data-label="Mijoz">{{ order.client }}</td>
+                        <td class="py-2 px-4" data-label="Dispecher Narxi">{{ order.closure.close_price }}</td>
+                        <td class="py-2 px-4" data-label="To‘lov Turi">{{ order.closure.price_turi }}</td>
+                        <td class="py-2 px-4" data-label="Dispecher">{{ order.closure.dispecher.full_name }}</td>
+                        <td class="py-2 px-4 flex space-x-2" data-label="Harakat">
+                            <a href="{% url 'filter_order' order.order_id %}"
+                               class="inline-block px-3 py-1 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition duration-200">
+                                Filterlash
+                            </a>
+                            <a href="{% url 'return_order' order.order_id %}"
+                               class="inline-block px-3 py-1 text-sm font-medium text-white bg-yellow-500 rounded-lg hover:bg-yellow-600 transition duration-200">
+                                Qaytarish
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tailwind CSS uchun qo‘shimcha stil -->
+    <style>
+        .flex {
+            display: flex;
+            gap: 0.5rem; /* Tugmalar orasidagi masofa */
+        }
+
+        .space-x-2 > * + * {
+            margin-left: 0.5rem; /* Tugmalar orasidagi masofa */
+        }
+
+        /* Responsive sozlamalar */
+        @media (max-width: 768px) {
+            .container {
+                padding-top: 1.5rem;
+                padding-bottom: 1.5rem;
+            }
+
+            .text-2xl {
+                font-size: 1.5rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 1.5rem;
+            }
+
+            /* Jadval uchun responsive sozlamalar */
+            .table-accounting, .table-accounting thead, .table-accounting tbody, .table-accounting th, .table-accounting td, .table-accounting tr {
+                display: block;
+            }
+
+            .table-accounting thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            .table-accounting tr {
+                margin-bottom: 0.5rem;
+                border: 1px solid #ddd;
+                border-radius: 0.5rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .table-accounting td {
+                border: none;
+                position: relative;
+                padding-left: 50% !important;
+                padding-right: 0.5rem !important;
+                padding-top: 0.25rem !important;
+                padding-bottom: 0.25rem !important;
+                font-size: 0.75rem;
+                display: flex;
+                align-items: center;
+                min-height: 2rem;
+            }
+
+            .table-accounting td:before {
+                position: absolute;
+                left: 0.5rem;
+                content: attr(data-label);
+                font-weight: bold;
+                white-space: nowrap;
+                font-size: 0.75rem;
+                color: #4b5563;
+            }
+
+            .table-accounting td a {
+                font-size: 0.65rem;
+                padding: 0.25rem 0.5rem;
+            }
+
+            .space-x-2 > * + * {
+                margin-left: 0.25rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .container {
+                padding-top: 1rem;
+                padding-bottom: 1rem;
+            }
+
+            .text-2xl {
+                font-size: 1.25rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 1rem;
+            }
+
+            .table-accounting td {
+                font-size: 0.7rem;
+                padding-left: 45% !important;
+            }
+
+            .table-accounting td:before {
+                font-size: 0.7rem;
+            }
+
+            .table-accounting td a {
+                font-size: 0.6rem;
+                padding: 0.2rem 0.4rem;
+            }
+
+            .space-x-2 > * + * {
+                margin-left: 0.2rem;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .container {
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+            }
+
+            .text-2xl {
+                font-size: 1.1rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 0.75rem;
+            }
+
+            .table-accounting td {
+                font-size: 0.65rem;
+                padding-left: 40% !important;
+            }
+
+            .table-accounting td:before {
+                font-size: 0.65rem;
+            }
+
+            .table-accounting td a {
+                font-size: 0.55rem;
+                padding: 0.15rem 0.3rem;
+            }
+
+            .space-x-2 > * + * {
+                margin-left: 0.15rem;
+            }
+        }
+    </style>
+{% endblock %}

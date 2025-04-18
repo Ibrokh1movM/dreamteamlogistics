@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        body.light-mode {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            margin: 0;
+            padding: 0;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+        .content.light-mode {
+            background: #fff;
+            transition: background 0.5s ease;
+        }
+        .sidebar.light-mode {
+            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+            transition: background 0.5s ease;
+        }
+        body.dark-mode {
+            background: linear-gradient(135deg, #1e1e2f 0%, #2a2a3b 100%);
+            color: #e0e0e0;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+        .content.dark-mode {
+            background: #2a2a3b;
+            transition: background 0.5s ease;
+        }
+        .sidebar.dark-mode {
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            transition: background 0.5s ease;
+        }
+        .table.dark-mode th, .table.dark-mode td {
+            background: #333;
+            color: #e0e0e0;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+        .sidebar {
+            min-width: 250px;
+            width: 250px;
+            color: white;
+            height: 100vh;
+            padding: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease-in-out;
+            z-index: 1000;
+        }
+        .sidebar h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .sidebar p {
+            font-size: 1rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #e0e0e0;
+        }
+        .sidebar nav a, .sidebar nav button {
+            display: block;
+            padding: 12px 20px;
+            margin: 5px 0;
+            color: #e0e0e0;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .sidebar nav a:hover, .sidebar nav button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            transform: translateX(10px);
+        }
+        .sidebar nav form button {
+            width: 100%;
+            text-align: left;
+        }
+        .content {
+            margin-left: 250px;
+            padding: 30px;
+            min-height: 100vh;
+            width: calc(100% - 250px);
+            box-sizing: border-box;
+            transition: margin-left 0.3s ease-in-out;
+        }
+        .form-control {
+            width: 100%;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #1e3c72;
+            box-shadow: 0 0 8px rgba(30, 60, 114, 0.2);
+        }
+        .modal-content {
+            padding: 20px;
+            border-radius: 15px;
+            background: #fff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #2a5298 0%, #1e3c72 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .table th, .table td {
+            vertical-align: middle;
+            font-size: 0.85rem;
+            padding: 6px;
+        }
+        .table th {
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .table-accounting th, .table-accounting td {
+            font-size: 0.7rem;
+            padding: 3px 5px;
+            white-space: normal;
+            max-width: 100px;
+            min-width: 80px;
+        }
+        .table-accounting th {
+            max-width: 100px;
+            min-width: 80px;
+        }
+        .status-jarayonda {
+            background-color: #fefcbf !important;
+        }
+        .status-tolandi {
+            background-color: #c6f0c2 !important;
+        }
+        .btn-toggle-mode {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: #1e3c72;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .btn-toggle-mode:hover {
+            transform: scale(1.1);
+        }
+        .clickable:hover {
+            cursor: pointer;
+            color: #1e3c72;
+            text-decoration: underline;
+        }
+        .order-id {
+            font-weight: bold;
+            color: #000 !important;
+            padding: 5px 10px;
+            border-radius: 15px;
+            transition: transform 0.2s ease;
+        }
+        .order-id:hover {
+            transform: scale(1.05);
+        }
+
+        /* Responsive qilish uchun qo'shimcha CSS */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 250px;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+                z-index: 1000;
+            }
+            .sidebar.active {
+                transform: translateX(0);
+                box-shadow: 5px 0 15px rgba(0, 0, 0, 0.3);
+            }
+            .content {
+                margin-left: 0;
+                width: 100%;
+                transition: margin-left 0.3s ease-in-out;
+            }
+            .sidebar.active ~ .content {
+                filter: brightness(0.8);
+            }
+            .table th, .table td {
+                font-size: 0.75rem;
+                padding: 4px;
+            }
+            .table-accounting th, .table-accounting td {
+                font-size: 0.65rem;
+                padding: 2px 3px;
+                max-width: 80px;
+                min-width: 60px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .modal-dialog {
+                margin: 0;
+                width: 100%;
+                max-width: 100%;
+                height: auto;
+            }
+            .modal-content {
+                padding: 15px;
+            }
+            .form-control {
+                font-size: 0.9rem;
+                padding: 8px;
+            }
+            .btn-primary {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+            .btn-close {
+                width: 30px;
+                height: 30px;
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar {
+                width: 200px;
+            }
+            .table th, .table td {
+                font-size: 0.7rem;
+                padding: 3px;
+            }
+            .table-accounting th, .table-accounting td {
+                font-size: 0.6rem;
+                max-width: 70px;
+                min-width: 50px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .sidebar {
+                width: 180px;
+            }
+            .table th, .table td {
+                font-size: 0.65rem;
+                padding: 2px;
+            }
+            .table-accounting th, .table-accounting td {
+                font-size: 0.55rem;
+                max-width: 60px;
+                min-width: 40px;
+            }
+            .form-control {
+                font-size: 0.85rem;
+            }
+            .btn-primary {
+                padding: 6px 12px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body class="light-mode">
+<div class="flex">
+    <div class="sidebar light-mode">
+        <button class="md:hidden text-white p-2 rounded-lg hover:bg-gray-700 transition" id="toggle-sidebar">
+            <i class="fas fa-bars text-xl"></i>
+        </button>
+        <h2>Order System</h2>
+        {% if user.is_authenticated %}
+            <p>Welcome, {{ user.full_name }} ({{ user.status|title }})</p>
+            <nav>
+                <a href="/" class="block"><i class="fas fa-list mr-2"></i> Buyurtmalar</a>
+                {% if user.status == 'bugalter' or user.status == 'admin' or user.status == 'manager' or user.status == 'direktor' %}
+                    <a href="/accounting" class="block"><i class="fas fa-calculator mr-2"></i> Bugalteriya</a>
+                {% endif %}
+                {% if user.status == 'filter' or user.status == 'admin' or user.status == 'direktor' %}
+                    <a href="/filter" class="block"><i class="fas fa-filter mr-2"></i> Filtrchi Sahifasi</a>
+                {% endif %}
+                {% if user.status == 'manager' or user.status == 'admin' or user.status == 'direktor' %}
+                    <button type="button" class="w-full text-left" data-bs-toggle="modal"
+                            data-bs-target="#createOrderModal">
+                        <i class="fas fa-plus mr-2"></i> Yangi Zayavka Berish
+                    </button>
+                {% endif %}
+                <a href="/statistics" class="block"><i class="fas fa-chart-line mr-2"></i> Statistika</a>
+                {% if user.status == 'bugalter' or user.status == 'admin' or user.status == 'direktor' %}
+                    <a href="/chat" class="block"><i class="fas fa-comments mr-2"></i> Chat</a>
+                {% endif %}
+                {% if user.status == 'admin' or user.status == 'direktor' %}
+                    <a href="{% url 'manager_stats_page' %}" class="block"><i class="fas fa-users mr-2"></i> Menejerlar Statistikasi</a>
+                    <a href="{% url 'dispatcher_stats_page' %}" class="block"><i class="fas fa-users mr-2"></i> Dispecherlar Statistikasi</a>
+                {% endif %}
+                <form method="post" action="{% url 'custom_logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full"><i class="fas fa-sign-out-alt mr-2"></i> Chiqish</button>
+                </form>
+            </nav>
+        {% else %}
+            <a href="{% url 'custom_login' %}" class="block"><i class="fas fa-sign-in-alt mr-2"></i> Kirish</a>
+        {% endif %}
+    </div>
+    <div class="content light-mode">
+        <button class="btn-toggle-mode" id="toggle-mode"><i class="fas fa-moon"></i></button>
+        <div class="modal fade" id="createOrderModal" tabindex="-1" aria-labelledby="createOrderModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="createOrderModalLabel">Yangi Zayavka Berish</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="create-order-form">
+                            <div class="mb-3">
+                                <label class="form-label">Qayerdan</label>
+                                <input type="text" id="qayerdan" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Qayerga</label>
+                                <input type="text" id="qayerga" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Mijoz</label>
+                                <input type="text" id="client" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Narx</label>
+                                <input type="number" id="price" class="form-control" step="0.01" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Tavsif</label>
+                                <textarea id="description" class="form-control"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Buyurtma Berish</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% block content %}{% endblock %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        const currentMode = localStorage.getItem('theme') || 'light';
+        $('body').addClass(currentMode + '-mode');
+        $('.content').addClass(currentMode + '-mode');
+        $('.sidebar').addClass(currentMode + '-mode');
+        $('.table').addClass(currentMode + '-mode');
+        updateToggleIcon(currentMode);
+
+        $('#toggle-mode').on('click', function () {
+            const isLight = $('body').hasClass('light-mode');
+            if (isLight) {
+                switchToDarkMode();
+            } else {
+                switchToLightMode();
+            }
+        });
+
+        $('#toggle-sidebar').click(function () {
+            $('.sidebar').toggleClass('active');
+            if ($('.sidebar').hasClass('active')) {
+                $('.content').css('overflow', 'hidden');
+            } else {
+                $('.content').css('overflow', 'auto');
+            }
+        });
+
+        $(document).on('click', function (e) {
+            if (!$(e.target).closest('.sidebar, #toggle-sidebar').length && $('.sidebar').hasClass('active')) {
+                $('.sidebar').removeClass('active');
+                $('.content').css('overflow', 'auto');
+            }
+        });
+
+        function switchToDarkMode() {
+            $('body').removeClass('light-mode').addClass('dark-mode');
+            $('.content').removeClass('light-mode').addClass('dark-mode');
+            $('.sidebar').removeClass('light-mode').addClass('dark-mode');
+            $('.table').removeClass('light-mode').addClass('dark-mode');
+            localStorage.setItem('theme', 'dark');
+            updateToggleIcon('dark');
+        }
+
+        function switchToLightMode() {
+            $('body').removeClass('dark-mode').addClass('light-mode');
+            $('.content').removeClass('dark-mode').addClass('light-mode');
+            $('.sidebar').removeClass('dark-mode').addClass('light-mode');
+            $('.table').removeClass('dark-mode').addClass('light-mode');
+            localStorage.setItem('theme', 'light');
+            updateToggleIcon('light');
+        }
+
+        function updateToggleIcon(mode) {
+            const icon = mode === 'light' ? 'fa-moon' : 'fa-sun';
+            const oldIcon = mode === 'light' ? 'fa-sun' : 'fa-moon';
+            $('#toggle-mode i').removeClass(oldIcon).addClass(icon);
+        }
+
+        $("#create-order-form").on("submit", function (e) {
+            e.preventDefault();
+            const orderData = {
+                qayerdan: $("#qayerdan").val(),
+                qayerga: $("#qayerga").val(),
+                client: $("#client").val(),
+                price: parseFloat($("#price").val()),
+                description: $("#description").val()
+            };
+
+            $.ajax({
+                url: "/api/orders/",
+                method: "POST",
+                data: JSON.stringify(orderData),
+                contentType: "application/json",
+                headers: {"X-CSRFToken": $('[name=csrfmiddlewaretoken]').val()},
+                success: function (response) {
+                    alert("Buyurtma muvaffaqiyatli yaratildi!");
+                    window.location.href = "/";
+                },
+                error: function (xhr) {
+                    alert("Xatolik yuz berdi: " + xhr.responseText);
+                }
+            });
+        });
+
+        $("[id^='close-order-form']").on("submit", function (e) {
+            e.preventDefault();
+            const orderId = this.id.split('-').pop();
+            const closeData = {
+                close_price: parseFloat($(`#close_price-${orderId}`).val()),
+                price_turi: $(`#price_turi-${orderId}`).val()
+            };
+
+            $.ajax({
+                url: `/api/orders/${orderId}/close/`,
+                method: "POST",
+                data: JSON.stringify(closeData),
+                contentType: "application/json",
+                headers: {"X-CSRFToken": $('[name=csrfmiddlewaretoken]').val()},
+                success: function (response) {
+                    alert(response.message);
+                    window.location.href = "/";
+                },
+                error: function (xhr) {
+                    alert("Xatolik yuz berdi: " + xhr.responseText);
+                }
+            });
+        });
+
+        $('.order-id').on('click', function() {
+            const text = $(this).text();
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Buyurtma ID nusxalandi: ' + text);
+            });
+        });
+
+        $('.firma-inn').not('input').on('click', function() {
+            const text = $(this).text();
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Firma INN nusxalandi: ' + text);
+            });
+        });
+
+        $('.firma-nomi').not('input').on('click', function() {
+            const text = $(this).text();
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Firma Nomi nusxalandi: ' + text);
+            });
+        });
+
+        $('.phone-number').not('input').on('click', function() {
+            const phone = $(this).text();
+            window.location.href = 'tel:' + phone;
+        });
+
+        $('.phone-number').on('input', function() {
+            let value = $(this).val().replace(/\D/g, '');
+            if (!value.startsWith('998')) {
+                value = '998' + value;
+            }
+            if (value.length > 12) value = value.slice(0, 12);
+            value = '+' + value.slice(0, 3) + ' ' + value.slice(3, 5) + ' ' + value.slice(5, 8) + ' ' + value.slice(8, 10) + ' ' + value.slice(10);
+            $(this).val(value.trim());
+        });
+
+        $('.firma-nomi').on('input', function() {
+            const input = $(this).val().toLowerCase();
+            if (input.length > 0) {
+                $.ajax({
+                    url: '/api/firma-suggestions/',
+                    method: 'GET',
+                    data: { q: input },
+                    success: function(response) {
+                        const suggestions = $('#suggestions');
+                        suggestions.empty().show();
+                        response.forEach(firma => {
+                            suggestions.append(`<li class="p-2 hover:bg-gray-200 cursor-pointer" data-value="${firma}">${firma}</li>`);
+                        });
+                    }
+                });
+            } else {
+                $('#suggestions').hide();
+            }
+        });
+
+        $(document).on('click', '#suggestions li', function() {
+            $('.firma-nomi').val($(this).data('value'));
+            $('#suggestions').hide();
+        });
+
+        $(document).click(function(e) {
+            if (!$(e.target).closest('.firma-nomi, #suggestions').length) {
+                $('#suggestions').hide();
+            }
+        });
+    });
+</script>
+{% block scripts %}
+    <style>
+        .close-btn {
+            background-color: #2196F3;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .close-btn:hover {
+            background-color: #1e88e5;
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .dots-menu {
+            padding: 6px 12px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .dots-menu:hover {
+            color: #1e3c72;
+        }
+        .dropdown-menu {
+            display: none;
+        }
+        .dropdown-menu.show {
+            display: block;
+        }
+        .pagination-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px; /* O‘lchamni yanada kichraytirdim */
+            height: 24px; /* O‘lchamni yanada kichraytirdim */
+            border-radius: 50%;
+            text-decoration: none;
+            font-size: 10px; /* Font o‘lchamini yanada kichraytirdim */
+            font-weight: 500;
+            color: #4b5563;
+            background-color: #e5e7eb; /* Yumshoqroq rang */
+            transition: all 0.3s ease;
+            margin: 0 1px; /* Tugmalar orasidagi bo‘shliqni yanada kamaytirdim */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Engil soya qo‘shdim */
+        }
+        .pagination-btn:hover:not(.opacity-50) {
+            background-color: #d1d5db;
+            color: #1f2937;
+            transform: scale(1.05);
+        }
+        .pagination-btn.bg-blue-600 {
+            background-color: #3b82f6; /* Yumshoqroq ko‘k rang */
+            color: white;
+        }
+        .pagination-btn.bg-blue-600:hover {
+            background-color: #2563eb;
+        }
+        .pagination-btn.opacity-50 {
+            cursor: not-allowed;
+            background-color: #f3f4f6;
+            color: #9ca3af;
+        }
+
+        /* Responsive qilish uchun qo'shimcha CSS */
+        @media (max-width: 576px) {
+            .pagination-btn {
+                width: 20px; /* Mobil ekranlarda yanada kichraytirdim */
+                height: 20px;
+                font-size: 8px; /* Font o‘lchamini yanada kichraytirdim */
+                margin: 0 1px;
+            }
+        }
+    </style>
+    <script>
+        $(document).ready(function () {
+            $('#search, #filter-status, #filter-date').on('input change', function () {
+                const search = $('#search').val().toLowerCase();
+                const filter = $('#filter-status').val();
+                const filterDate = $('#filter-date').val();
+
+                $('#order-table tbody tr').each(function () {
+                    const row = $(this);
+                    const orderId = row.find('.order-id').text().toLowerCase();
+                    const client = row.find('td:nth-child(2)').text().toLowerCase();
+                    const direction = row.find('td:nth-child(3)').text().toLowerCase();
+                    const status = row.hasClass('bg-green-50') ? 'open' : 'closed';
+                    const createdAt = row.find('td:nth-child(7)').text();
+
+                    const matchesSearch = orderId.includes(search) || client.includes(search) || direction.includes(search);
+                    const matchesFilter = filter === 'all' || (filter === 'open' && status === 'open') || (filter === 'closed' && status === 'closed');
+                    const matchesDate = filterDate ? createdAt.includes(filterDate) : true;
+
+                    row.toggle(matchesSearch && matchesFilter && matchesDate);
+                });
+            });
+
+            const socket = new WebSocket('ws://' + window.location.host + '/ws/dispatchers/');
+            socket.onmessage = function (e) {
+                const data = JSON.parse(e.data);
+                console.log('Xabar keldi:', data.message);
+            };
+            socket.onopen = function () {
+                console.log('WebSocket ulandi');
+            };
+            socket.onclose = function () {
+                console.log('WebSocket uzildi');
+            };
+
+            window.toggleDropdown = function (button) {
+                const dropdownMenu = $(button).siblings('.dropdown-menu');
+                $('.dropdown-menu').not(dropdownMenu).removeClass('show');
+                dropdownMenu.toggleClass('show');
+            };
+
+            $(document).on('click', function (e) {
+                if (!$(e.target).closest('.dropdown').length) {
+                    $('.dropdown-menu').removeClass('show');
+                }
+            });
+
+            const socketDispatcher = new WebSocket('ws://' + window.location.host + '/ws/dispatchers/');
+            socketDispatcher.onmessage = function (e) {
+                const data = JSON.parse(e.data);
+                console.log('Xabar keldi:', data.message);
+            };
+            socketDispatcher.onopen = function () {
+                console.log('WebSocket ulandi');
+            };
+            socketDispatcher.onclose = function () {
+                console.log('WebSocket uzildi');
+            };
+        });
+
+        function openDeleteModal(orderId) {
+            $('#deleteOrderModal-' + orderId).modal('show');
+        }
+
+        function deleteOrder(orderId) {
+            $.ajax({
+                url: `/api/orders/${orderId}/delete/`,
+                method: "DELETE",
+                headers: {"X-CSRFToken": $('[name=csrfmiddlewaretoken]').val()},
+                success: function (response) {
+                    alert("Buyurtma muvaffaqiyatli o‘chirildi!");
+                    window.location.reload();
+                },
+                error: function (xhr) {
+                    alert("Xatolik yuz berdi: " + xhr.responseText);
+                }
+            });
+        }
+    </script>
+{% endblock %}
+</body>
+</html>

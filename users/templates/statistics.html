@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Statistika</h1>
+        <!-- Filter Form -->
+        <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="w-full sm:w-auto">
+                <label for="filter-month" class="block text-gray-700 text-sm font-medium mb-1">Oy tanlang:</label>
+                <input type="month" id="filter-month" name="filter_month"
+                       class="w-full sm:w-64 border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+
+        {% if role == 'manager' %}
+            <div class="overflow-x-auto">
+                <table class="w-full bg-white shadow-md rounded-lg">
+                    <thead class="bg-gray-100 hidden sm:table-header-group">
+                    <tr>
+                        <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">Buyurtma ID</th>
+                        <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">Yo‘nalish</th>
+                        <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">Manager Narxi</th>
+                        <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">Dispecher Narxi</th>
+                        <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">Firmaga Foyda</th>
+                        <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">Yaratilgan Sana</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for stat in stats %}
+                        <tr class="border-b hover:bg-gray-50 flex flex-col sm:table-row">
+                            <td class="py-3 px-4 text-sm text-gray-600"
+                                data-label="Buyurtma ID">{{ stat.order_id }}</td>
+                            <td class="py-3 px-4 text-sm text-gray-600" data-label="Yo‘nalish">{{ stat.qayerdan }}
+                                - {{ stat.qayerga }}</td>
+                            <td class="py-3 px-4 text-sm text-gray-600"
+                                data-label="Manager Narxi">{{ stat.manager_price }}</td>
+                            <td class="py-3 px-4 text-sm text-gray-600"
+                                data-label="Dispecher Narxi">{{ stat.dispecher_price }}</td>
+                            <td class="py-3 px-4 text-sm text-gray-600"
+                                data-label="Firmaga Foyda">{{ stat.profit }}</td>
+                            <td class="py-3 px-4 text-sm text-gray-600"
+                                data-label="Yaratilgan Sana">{{ stat.created_at|date:"d.m.Y H:i" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="py-4 px-4 text-center text-gray-500">Ma'lumot topilmadi.</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4">
+                <p class="text-lg font-bold text-gray-800">Jami Buyurtmalar: {{ total_orders }}</p>
+            </div>
+        {% elif role == 'dispecher' %}
+            <div class="overflow-x-auto">
+                <table class="w-full bg-white shadow-md rounded-lg">
+                    <thead class="bg-gray-100 hidden sm:table-header-group">
+                    <tr>
+                        <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">Buyurtma ID</th>
+                        <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">Yo‘nalish</th>
+                        <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">Dispecher Narxi</th>
+                        <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">To‘lov Turi</th>
+                        <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">Yopilgan Sana</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for stat in stats %}
+                        <tr class="border-b hover:bg-gray-50 flex flex-col sm:table-row">
+                            <td class="py-3 px-4 text-sm text-gray-600"
+                                data-label="Buyurtma ID">{{ stat.order_id }}</td>
+                            <td class="py-3 px-4 text-sm text-gray-600" data-label="Yo‘nalish">{{ stat.qayerdan }}
+                                - {{ stat.qayerga }}</td>
+                            <td class="py-3 px-4 text-sm text-gray-600"
+                                data-label="Dispecher Narxi">{{ stat.dispecher_price }}</td>
+                            <td class="py-3 px-4 text-sm text-gray-600"
+                                data-label="To‘lov Turi">{{ stat.price_turi }}</td>
+                            <td class="py-3 px-4 text-sm text-gray-600"
+                                data-label="Yopilgan Sana">{{ stat.closed_at|date:"d.m.Y H:i" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="py-4 px-4 text-center text-gray-500">Ma'lumot topilmadi.</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4">
+                <p class="text-lg font-bold text-gray-800">Jami Yopilgan Buyurtmalar: {{ total_orders }}</p>
+            </div>
+        {% else %}
+            <p class="text-red-500 font-medium">Bu sahifaga faqat manager va dispecherlar kira oladi.</p>
+        {% endif %}
+    </div>
+
+    <!-- Responsive CSS -->
+    <style>
+        /* Base table styling */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        /* Mobile-specific styling */
+        @media (max-width: 640px) {
+            table {
+                display: block;
+            }
+
+            thead {
+                display: none;
+            }
+
+            tr {
+                display: flex;
+                flex-direction: column;
+                margin-bottom: 1rem;
+                border: 1px solid #e5e7eb;
+                border-radius: 0.5rem;
+                background-color: #fff;
+            }
+
+            td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+                border-bottom: 1px solid #f3f4f6;
+            }
+
+            td:last-child {
+                border-bottom: none;
+            }
+
+            td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #374151;
+                white-space: nowrap;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const filterMonth = document.getElementById('filter-month');
+            filterMonth.addEventListener('change', function () {
+                const selectedMonth = this.value;
+                if (selectedMonth) {
+                    window.location.href = `/statistics/?month=${selectedMonth}`;
+                }
+            });
+        });
+    </script>
+{% endblock %}

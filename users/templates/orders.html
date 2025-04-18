@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="py-6 w-full">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 animate__animated animate__fadeIn">Buyurtmalar</h1>
+        <div class="overflow-x-auto">
+            <table class="table w-full bg-white shadow-lg rounded-lg overflow-hidden">
+                <thead>
+                <tr class="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+                    <th class="py-4 px-6 text-left w-1/12">Buyurtma</th>
+                    <th class="py-4 px-6 text-left w-1/12">Mijoz</th>
+                    <th class="py-4 px-6 text-left w-2/12">Yo‘nalish</th>
+                    {% if user.status == 'manager' %}
+                        <th class="py-4 px-6 text-left w-1/12">Narx</th>
+                    {% endif %}
+                    <th class="py-4 px-6 text-left w-4/12">Tavsif</th>
+                    <th class="py-4 px-6 text-left w-1/12">Holati</th>
+                    {% if user.status == 'dispecher' %}
+                        <th class="py-4 px-6 text-left w-1/12">Amallar</th>
+                    {% endif %}
+                </tr>
+                </thead>
+                <tbody id="order-list">
+                {% for order in orders %}
+                    <tr class="border-b hover:bg-gray-50 transition-all duration-300 animate__animated animate__fadeInUp">
+                        <td class="py-4 px-6" data-label="Buyurtma">{{ order.order_id }}</td>
+                        <td class="py-4 px-6" data-label="Mijoz">{{ order.client }}</td>
+                        <td class="py-4 px-6" data-label="Yo‘nalish">{{ order.qayerdan }} - {{ order.qayerga }}</td>
+                        {% if user.status == 'manager' %}
+                            <td class="py-4 px-6" data-label="Narx">{{ order.price }}</td>
+                        {% endif %}
+                        <td class="py-4 px-6" data-label="Tavsif">{{ order.description }}</td>
+                        <td class="py-4 px-6" data-label="Holati">
+                            {% if order.close_order_status %}
+                                <span class="badge bg-red-500 text-white px-2 py-1 rounded-full text-sm">Yopilgan</span>
+                            {% else %}
+                                <span class="badge bg-green-500 text-white px-2 py-1 rounded-full text-sm">Ochiq</span>
+                            {% endif %}
+                        </td>
+                        {% if user.status == 'dispecher' %}
+                            <td class="py-4 px-6" data-label="Amallar">
+                                {% if not order.close_order_status %}
+                                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                            data-bs-target="#closeOrderModal-{{ order.order_id }}">
+                                        Band Qilish
+                                    </button>
+                                {% endif %}
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% for order in orders %}
+            {% if user.status == 'dispecher' and not order.close_order_status %}
+                <div class="modal fade" id="closeOrderModal-{{ order.order_id }}" tabindex="-1"
+                     aria-labelledby="closeOrderModalLabel-{{ order.order_id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="closeOrderModalLabel-{{ order.order_id }}">
+                                    Buyurtma {{ order.order_id }} ni Yopish</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="close-order-form-{{ order.order_id }}">
+                                    <div class="mb-3">
+                                        <label class="form-label">Dispetcher Narxi</label>
+                                        <input type="number" id="close_price-{{ order.order_id }}" class="form-control"
+                                               step="0.01" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">To‘lov Turi</label>
+                                        <select id="price_turi-{{ order.order_id }}" class="form-control" required>
+                                            <option value="perechesleniya">Perechesleniya</option>
+                                            <option value="yatt">YATT</option>
+                                            <option value="naxt">Naxt</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Yopish va Filterchiga Yuborish
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Responsivlik uchun qo‘shimcha CSS -->
+    <style>
+        @media (max-width: 768px) {
+            .py-6 {
+                padding-top: 1.5rem;
+                padding-bottom: 1.5rem;
+            }
+
+            .text-3xl {
+                font-size: 1.75rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 1.5rem;
+            }
+
+            /* Jadval uchun responsive sozlamalar */
+            .table, .table thead, .table tbody, .table th, .table td, .table tr {
+                display: block;
+            }
+
+            .table thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            .table tr {
+                margin-bottom: 0.5rem;
+                border: 1px solid #ddd;
+                border-radius: 0.5rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .table td {
+                border: none;
+                position: relative;
+                padding-left: 50% !important;
+                padding-right: 0.5rem !important;
+                padding-top: 0.25rem !important;
+                padding-bottom: 0.25rem !important;
+                font-size: 0.75rem;
+                display: flex;
+                align-items: center;
+                min-height: 2rem;
+            }
+
+            .table td:before {
+                position: absolute;
+                left: 0.5rem;
+                content: attr(data-label);
+                font-weight: bold;
+                white-space: nowrap;
+                font-size: 0.75rem;
+                color: #4b5563;
+            }
+
+            .table .badge {
+                font-size: 0.65rem;
+                padding: 0.25rem 0.5rem;
+            }
+
+            .table .btn-sm {
+                font-size: 0.65rem;
+                padding: 0.25rem 0.5rem;
+            }
+
+            /* Modal oynalar */
+            .modal-content {
+                padding: 1rem;
+            }
+
+            .modal-title {
+                font-size: 1.1rem;
+            }
+
+            .modal-body {
+                font-size: 0.9rem;
+            }
+
+            .modal-footer .btn {
+                font-size: 0.9rem;
+                padding: 0.5rem 1rem;
+            }
+
+            .modal-body input, .modal-body select {
+                font-size: 0.9rem;
+                padding: 0.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .py-6 {
+                padding-top: 1rem;
+                padding-bottom: 1rem;
+            }
+
+            .text-3xl {
+                font-size: 1.5rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 1rem;
+            }
+
+            .table td {
+                font-size: 0.7rem;
+                padding-left: 45% !important;
+            }
+
+            .table td:before {
+                font-size: 0.7rem;
+            }
+
+            .table .badge {
+                font-size: 0.6rem;
+                padding: 0.2rem 0.4rem;
+            }
+
+            .table .btn-sm {
+                font-size: 0.6rem;
+                padding: 0.2rem 0.4rem;
+            }
+
+            .modal-content {
+                padding: 0.75rem;
+            }
+
+            .modal-title {
+                font-size: 1rem;
+            }
+
+            .modal-body {
+                font-size: 0.85rem;
+            }
+
+            .modal-footer .btn {
+                font-size: 0.85rem;
+                padding: 0.4rem 0.75rem;
+            }
+
+            .modal-body input, .modal-body select {
+                font-size: 0.85rem;
+                padding: 0.4rem;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .py-6 {
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+            }
+
+            .text-3xl {
+                font-size: 1.25rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 0.75rem;
+            }
+
+            .table td {
+                font-size: 0.65rem;
+                padding-left: 40% !important;
+            }
+
+            .table td:before {
+                font-size: 0.65rem;
+            }
+
+            .table .badge {
+                font-size: 0.55rem;
+                padding: 0.15rem 0.3rem;
+            }
+
+            .table .btn-sm {
+                font-size: 0.55rem;
+                padding: 0.15rem 0.3rem;
+            }
+
+            .modal-content {
+                padding: 0.5rem;
+            }
+
+            .modal-title {
+                font-size: 0.9rem;
+            }
+
+            .modal-body {
+                font-size: 0.8rem;
+            }
+
+            .modal-footer .btn {
+                font-size: 0.8rem;
+                padding: 0.3rem 0.5rem;
+            }
+
+            .modal-body input, .modal-body select {
+                font-size: 0.8rem;
+                padding: 0.3rem;
+            }
+        }
+    </style>
+{% endblock %}

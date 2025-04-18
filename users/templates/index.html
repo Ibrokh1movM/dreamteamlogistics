@@ -1,0 +1,625 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mx-auto py-6 px-4">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 animate__animated animate__fadeIn">Buyurtmalar</h1>
+        <!-- Qidiruv va Filtr qo‘shish -->
+        <div class="flex flex-col md:flex-row justify-between mb-4 gap-4">
+            <input type="text" id="search" class="form-control w-full md:w-1/3" placeholder="Qidirish...">
+            <select id="filter-status" class="form-control w-full md:w-1/4">
+                <option value="all" {% if request.GET.filter_status == 'all' %}selected{% endif %}>Barchasi</option>
+                <option value="open" {% if request.GET.filter_status == 'open' %}selected{% endif %}>Ochiq</option>
+                <option value="closed" {% if request.GET.filter_status == 'closed' %}selected{% endif %}>Yopilgan
+                </option>
+            </select>
+            <!-- Sana bo'yicha filter -->
+            <input type="text" id="filter-date" name="filter_date" class="form-control w-full md:w-1/4"
+                   placeholder="Sana bo'yicha filter" value="{{ request.GET.filter_date }}">
+            <!-- Filter turi (kun, oy, yil) -->
+            <select id="filter-type" name="filter_type" class="form-control w-full md:w-1/4">
+                <option value="day" {% if request.GET.filter_type == 'day' %}selected{% endif %}>Kun</option>
+                <option value="month" {% if request.GET.filter_type == 'month' %}selected{% endif %}>Oy</option>
+                <option value="year" {% if request.GET.filter_type == 'year' %}selected{% endif %}>Yil</option>
+            </select>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="table w-full bg-white shadow-lg rounded-lg overflow-hidden" id="order-table">
+                <thead>
+                <tr class="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+                    <th class="py-4 px-6 text-left w-1/12">Buyurtma</th>
+                    <th class="py-4 px-6 text-left w-1/12">Mijoz</th>
+                    <th class="py-4 px-6 text-left w-2/12">Yo‘nalish</th>
+                    {% if user.status == 'manager' %}
+                        <th class="py-4 px-6 text-left w-1/12">Narx</th>
+                    {% endif %}
+                    <th class="py-4 px-6 text-left w-4/12">Tavsif</th>
+                    <th class="py-4 px-6 text-left w-1/12">Manager</th>
+                    <th class="py-4 px-6 text-left w-1/12">Vaqt</th>
+                    <th class="py-4 px-6 text-left w-1/12">Holati</th>
+                    {% if user.status == 'dispecher' or user.status == 'manager' %}
+                        <th class="py-4 px-6 text-left w-2/12">Amallar</th>
+                    {% endif %}
+                </tr>
+                </thead>
+                <tbody id="order-list">
+                {% for item in orders %}
+                    <tr class="border-b hover:bg-gray-50 transition-all duration-300 animate__animated animate__fadeInUp {% if not item.order.close_order_status %}bg-green-50{% else %}bg-red-50{% endif %}">
+                        <td class="py-4 px-6 order-id" data-label="Buyurtma">
+                            <span class="cursor-pointer font-bold"
+                                  onclick="copyToClipboard('{{ item.order.order_id }}')">{{ item.order.order_id }}</span>
+                        </td>
+                        <td class="py-4 px-6" data-label="Mijoz">{{ item.order.client }}</td>
+                        <td class="py-4 px-6" data-label="Yo‘nalish">{{ item.order.qayerdan }}
+                            - {{ item.order.qayerga }}</td>
+                        {% if user.status == 'manager' %}
+                            <td class="py-4 px-6" data-label="Narx">{{ item.order.price }}</td>
+                        {% endif %}
+                        <td class="py-4 px-6" data-label="Tavsif">{{ item.order.description }}</td>
+                        <td class="py-4 px-6" data-label="Manager">{{ item.order.manager.full_name }}</td>
+                        <td class="py-4 px-6 time-diff" data-created="{{ item.order.created_at|date:'c' }}"
+                            data-label="Vaqt"
+                            style="color: {{ item.time_color }}">{{ item.time_diff_minutes|floatformat:0 }} daqiqa
+                        </td>
+                        <td class="py-4 px-6 status-cell" data-label="Holati">
+                            {% if item.order.close_order_status %}
+                                <span class="badge bg-red-500 text-white px-2 py-1 rounded-full text-sm">Yopilgan</span>
+                            {% else %}
+                                <span class="badge bg-green-500 text-white px-2 py-1 rounded-full text-sm">Ochiq</span>
+                            {% endif %}
+                        </td>
+                        {% if user.status == 'dispecher' %}
+                            <td class="py-4 px-6" data-label="Amallar">
+                                {% if not item.order.close_order_status %}
+                                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                            data-bs-target="#closeOrderModal-{{ item.order.order_id }}">
+                                        Band Qilish
+                                    </button>
+                                {% endif %}
+                            </td>
+                        {% elif user.status == 'manager' %}
+                            <td class="py-4 px-6 flex space-x-2" data-label="Amallar">
+                                <a href="{% url 'edit_order_page' item.order.order_id %}"
+                                   class="btn btn-sm btn-edit text-yellow-500 hover:bg-gray-100">Tahrirlash</a>
+                                <a href="#" onclick="openDeleteModal('{{ item.order.order_id }}')"
+                                   class="btn btn-sm btn-delete text-red-500 hover:bg-gray-100">O‘chirish</a>
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="{% if user.status == 'manager' %}9{% else %}8{% endif %}"
+                            class="py-4 px-6 text-center">Buyurtmalar mavjud emas.
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination qo‘shish -->
+        {% if page_obj.has_other_pages %}
+            <div class="pagination mt-4">
+                <ul class="flex justify-center space-x-2">
+                    {% if page_obj.has_previous %}
+                        <li>
+                            <a href="?page={{ page_obj.previous_page_number }}&search={{ request.GET.search }}&filter_status={{ request.GET.filter_status }}&filter_date={{ request.GET.filter_date }}&filter_type={{ request.GET.filter_type }}"
+                               class="pagination-btn">Oldingi</a>
+                        </li>
+                    {% else %}
+                        <li><span class="pagination-btn opacity-50">Oldingi</span></li>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li><span class="pagination-btn bg-blue-600">{{ num }}</span></li>
+                        {% else %}
+                            <li>
+                                <a href="?page={{ num }}&search={{ request.GET.search }}&filter_status={{ request.GET.filter_status }}&filter_date={{ request.GET.filter_date }}&filter_type={{ request.GET.filter_type }}"
+                                   class="pagination-btn">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                        <li>
+                            <a href="?page={{ page_obj.next_page_number }}&search={{ request.GET.search }}&filter_status={{ request.GET.filter_status }}&filter_date={{ request.GET.filter_date }}&filter_type={{ request.GET.filter_type }}"
+                               class="pagination-btn">Keyingi</a>
+                        </li>
+                    {% else %}
+                        <li><span class="pagination-btn opacity-50">Keyingi</span></li>
+                    {% endif %}
+                </ul>
+            </div>
+        {% endif %}
+        <!-- Modal qismlari -->
+        {% for item in orders %}
+            {% if user.status == 'dispecher' and not item.order.close_order_status %}
+                <div class="modal fade" id="closeOrderModal-{{ item.order.order_id }}" tabindex="-1"
+                     aria-labelledby="closeOrderModalLabel-{{ item.order.order_id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="closeOrderModalLabel-{{ item.order.order_id }}">
+                                    Buyurtma {{ item.order.order_id }} ni Yopish
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="close-order-form-{{ item.order.order_id }}">
+                                    <div class="mb-3">
+                                        <label class="form-label">Dispetcher Narxi</label>
+                                        <input type="number" id="close_price-{{ item.order.order_id }}"
+                                               class="form-control"
+                                               step="0.01" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">To‘lov Turi</label>
+                                        <select id="price_turi-{{ item.order.order_id }}" class="form-control" required>
+                                            <option value="perechesleniya">Perechesleniya</option>
+                                            <option value="yatt">YATT</option>
+                                            <option value="naxt">Naxt</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Yopish va Filterchiga Yuborish
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            {% if user.status == 'manager' %}
+                <div class="modal fade" id="deleteOrderModal-{{ item.order.order_id }}" tabindex="-1"
+                     aria-labelledby="deleteOrderModalLabel-{{ item.order.order_id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="deleteOrderModalLabel-{{ item.order.order_id }}">
+                                    Buyurtma {{ item.order.order_id }} ni O‘chirish
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                Haqiqatan ham buyurtmani o‘chirmoqchimisiz?
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Yo‘q</button>
+                                <a href="{% url 'delete_order' item.order.order_id %}" class="btn btn-danger">Ha</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Responsivlik uchun qo‘shimcha CSS -->
+    <style>
+        @media (max-width: 768px) {
+            .container {
+                padding-top: 1.5rem;
+                padding-bottom: 1.5rem;
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .text-3xl {
+                font-size: 1.75rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 1.5rem;
+            }
+
+            .mb-4 {
+                margin-bottom: 1rem;
+            }
+
+            .gap-4 {
+                gap: 1rem;
+            }
+
+            .w-full.md\:w-1\/3, .w-full.md\:w-1\/4 {
+                width: 100%;
+            }
+
+            .form-control {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            /* Jadval uchun responsive sozlamalar */
+            .table, .table thead, .table tbody, .table th, .table td, .table tr {
+                display: block;
+            }
+
+            .table thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            .table tr {
+                margin-bottom: 0.5rem;
+                border: 1px solid #ddd;
+                border-radius: 0.5rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .table td {
+                border: none;
+                position: relative;
+                padding-left: 50% !important;
+                padding-right: 0.5rem !important;
+                padding-top: 0.25rem !important;
+                padding-bottom: 0.25rem !important;
+                font-size: 0.75rem;
+                display: flex;
+                align-items: center;
+                min-height: 2rem;
+            }
+
+            .table td:before {
+                position: absolute;
+                left: 0.5rem;
+                content: attr(data-label);
+                font-weight: bold;
+                white-space: nowrap;
+                font-size: 0.75rem;
+                color: #4b5563;
+            }
+
+            .table .badge {
+                font-size: 0.65rem;
+                padding: 0.25rem 0.5rem;
+            }
+
+            .table .btn-sm {
+                font-size: 0.65rem;
+                padding: 0.25rem 0.5rem;
+            }
+
+            .space-x-2 > :not([hidden]) ~ :not([hidden]) {
+                margin-left: 0.25rem;
+            }
+
+            /* Pagination sozlamalari */
+            .pagination {
+                margin-top: 1rem;
+            }
+
+            .pagination-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.9rem;
+            }
+
+            /* Modal oynalar */
+            .modal-content {
+                padding: 1rem;
+            }
+
+            .modal-title {
+                font-size: 1.1rem;
+            }
+
+            .modal-body {
+                font-size: 0.9rem;
+            }
+
+            .modal-footer .btn {
+                font-size: 0.9rem;
+                padding: 0.5rem 1rem;
+            }
+
+            .modal-body input, .modal-body select {
+                font-size: 0.9rem;
+                padding: 0.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .container {
+                padding-top: 1rem;
+                padding-bottom: 1rem;
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+
+            .text-3xl {
+                font-size: 1.5rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 1rem;
+            }
+
+            .mb-4 {
+                margin-bottom: 0.75rem;
+            }
+
+            .gap-4 {
+                gap: 0.75rem;
+            }
+
+            .form-control {
+                padding: 0.4rem;
+                font-size: 0.85rem;
+            }
+
+            .table td {
+                font-size: 0.7rem;
+                padding-left: 45% !important;
+            }
+
+            .table td:before {
+                font-size: 0.7rem;
+            }
+
+            .table .badge {
+                font-size: 0.6rem;
+                padding: 0.2rem 0.4rem;
+            }
+
+            .table .btn-sm {
+                font-size: 0.6rem;
+                padding: 0.2rem 0.4rem;
+            }
+
+            .space-x-2 > :not([hidden]) ~ :not([hidden]) {
+                margin-left: 0.2rem;
+            }
+
+            .pagination-btn {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.85rem;
+            }
+
+            .modal-content {
+                padding: 0.75rem;
+            }
+
+            .modal-title {
+                font-size: 1rem;
+            }
+
+            .modal-body {
+                font-size: 0.85rem;
+            }
+
+            .modal-footer .btn {
+                font-size: 0.85rem;
+                padding: 0.4rem 0.75rem;
+            }
+
+            .modal-body input, .modal-body select {
+                font-size: 0.85rem;
+                padding: 0.4rem;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .container {
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+                padding-left: 0.25rem;
+                padding-right: 0.25rem;
+            }
+
+            .text-3xl {
+                font-size: 1.25rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 0.75rem;
+            }
+
+            .mb-4 {
+                margin-bottom: 0.5rem;
+            }
+
+            .gap-4 {
+                gap: 0.5rem;
+            }
+
+            .form-control {
+                padding: 0.3rem;
+                font-size: 0.8rem;
+            }
+
+            .table td {
+                font-size: 0.65rem;
+                padding-left: 40% !important;
+            }
+
+            .table td:before {
+                font-size: 0.65rem;
+            }
+
+            .table .badge {
+                font-size: 0.55rem;
+                padding: 0.15rem 0.3rem;
+            }
+
+            .table .btn-sm {
+                font-size: 0.55rem;
+                padding: 0.15rem 0.3rem;
+            }
+
+            .space-x-2 > :not([hidden]) ~ :not([hidden]) {
+                margin-left: 0.15rem;
+            }
+
+            .pagination-btn {
+                padding: 0.3rem 0.5rem;
+                font-size: 0.8rem;
+            }
+
+            .modal-content {
+                padding: 0.5rem;
+            }
+
+            .modal-title {
+                font-size: 0.9rem;
+            }
+
+            .modal-body {
+                font-size: 0.8rem;
+            }
+
+            .modal-footer .btn {
+                font-size: 0.8rem;
+                padding: 0.3rem 0.5rem;
+            }
+
+            .modal-body input, .modal-body select {
+                font-size: 0.8rem;
+                padding: 0.3rem;
+            }
+        }
+
+        .status-green {
+            background-color: #34D399;
+        }
+
+        .status-yellow {
+            background-color: #FBBF24;
+        }
+
+        .status-red {
+            background-color: #F87171;
+        }
+
+        .form-control {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .pagination-btn {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .pagination-btn:hover {
+            background-color: #f1f1f1;
+        }
+
+        .badge {
+            display: inline-block;
+        }
+
+        .order-id, .order-id span {
+            color: #000 !important;
+        }
+
+        .btn-edit, .btn-delete {
+            padding: 4px 8px;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+    </style>
+
+    {% block scripts %}
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <script>
+            // Copy to clipboard
+            function copyToClipboard(text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('ID nusxa olindi!');
+                });
+            }
+
+            // Filtrlarni qo‘llash funksiyasi
+            function applyFilters() {
+                const searchText = document.getElementById('search').value.toLowerCase();
+                const filterStatus = document.getElementById('filter-status').value;
+                const filterDate = document.getElementById('filter-date').value;
+                const filterType = document.getElementById('filter-type').value;
+
+                const rows = document.querySelectorAll('#order-list tr');
+
+                rows.forEach(row => {
+                    // Qidiruv
+                    const orderId = row.querySelector('.order-id').textContent.toLowerCase();
+                    const client = row.querySelector('td[data-label="Mijoz"]').textContent.toLowerCase();
+                    const direction = row.querySelector('td[data-label="Yo‘nalish"]').textContent.toLowerCase();
+                    const matchesSearch = orderId.includes(searchText) || client.includes(searchText) || direction.includes(searchText);
+
+                    // Holat bo'yicha filtr
+                    const status = row.classList.contains('bg-green-50') ? 'open' : 'closed';
+                    const matchesStatus = filterStatus === 'all' || (filterStatus === 'open' && status === 'open') || (filterStatus === 'closed' && status === 'closed');
+
+                    // Sana bo'yicha filtr
+                    const createdAt = new Date(row.querySelector('.time-diff').getAttribute('data-created'));
+                    let matchesDate = true;
+
+                    if (filterDate) {
+                        const selectedDate = new Date(filterDate);
+                        if (filterType === 'day') {
+                            matchesDate = createdAt.getFullYear() === selectedDate.getFullYear() &&
+                                createdAt.getMonth() === selectedDate.getMonth() &&
+                                createdAt.getDate() === selectedDate.getDate();
+                        } else if (filterType === 'month') {
+                            matchesDate = createdAt.getFullYear() === selectedDate.getFullYear() &&
+                                createdAt.getMonth() === selectedDate.getMonth();
+                        } else if (filterType === 'year') {
+                            matchesDate = createdAt.getFullYear() === selectedDate.getFullYear();
+                        }
+                    }
+
+                    // Barcha shartlarni tekshirib, qatorni ko‘rsatish/yashirish
+                    row.style.display = matchesSearch && matchesStatus && matchesDate ? '' : 'none';
+                });
+            }
+
+            function openDeleteModal(orderId) {
+                const modal = document.getElementById(`deleteOrderModal-${orderId}`);
+                const bsModal = new bootstrap.Modal(modal);
+                bsModal.show();
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const timeDiffElements = document.querySelectorAll('.time-diff');
+                timeDiffElements.forEach(element => {
+                    const createdAt = new Date(element.getAttribute('data-created'));
+                    const now = new Date();
+                    const diffMs = now - createdAt;
+                    const diffMins = Math.floor(diffMs / 1000 / 60);
+                    const diffHours = Math.floor(diffMins / 60);
+                    const mins = diffMins % 60;
+
+                    element.textContent = `${diffHours} soat ${mins} daqiqa`;
+
+                    const statusCell = element.parentElement.querySelector('.status-cell');
+                    if (diffMins <= 30) {
+                        statusCell.classList.add('status-green');
+                    } else if (diffMins <= 90) {
+                        statusCell.classList.add('status-yellow');
+                    } else {
+                        statusCell.classList.add('status-red');
+                    }
+                });
+
+                // Flatpickr for date range
+                flatpickr('#filter-date', {
+                    mode: 'single',
+                    dateFormat: 'Y-m-d',
+                    onChange: (selectedDates) => {
+                        applyFilters();
+                    }
+                });
+
+                // Qidiruv va filtrlar uchun event listenerlar
+                document.getElementById('search').addEventListener('input', applyFilters);
+                document.getElementById('filter-status').addEventListener('change', applyFilters);
+                document.getElementById('filter-type').addEventListener('change', applyFilters);
+
+                // Dastlabki holatda filtr qo‘llash
+                applyFilters();
+            });
+        </script>
+    {% endblock %}
+{% endblock %}

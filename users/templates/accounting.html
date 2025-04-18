@@ -1,0 +1,519 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mx-auto py-4 md:py-6 px-2 md:px-4">
+        <h1 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6">Bugalteriya</h1>
+
+        <!-- Search va Filter formasi -->
+        <div class="mb-4 md:mb-6 flex flex-col md:flex-row md:gap-4 gap-2">
+            <div class="flex flex-col md:flex-row md:gap-4 gap-2 w-full">
+                <div class="flex-1">
+                    <input type="text" id="search" name="search" value="{{ search_query }}"
+                           placeholder="Buyurtma ID, Mijoz yoki Firma bo‘yicha qidirish"
+                           class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm md:text-base">
+                </div>
+                <div class="flex-1 md:max-w-[150px]">
+                    <select id="status" name="status"
+                            class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm md:text-base">
+                        <option value="" {% if not payment_status %}selected{% endif %}>Barchasi</option>
+                        <option value="jarayonda" {% if payment_status == 'jarayonda' %}selected{% endif %}>Jarayonda
+                        </option>
+                        <option value="tolandi" {% if payment_status == 'tolandi' %}selected{% endif %}>To‘landi
+                        </option>
+                    </select>
+                </div>
+                <!-- Sana bo'yicha filter -->
+                <div class="flex-1 md:max-w-[150px]">
+                    <input type="date" id="filter_date" name="filter_date" value="{{ request.GET.filter_date }}"
+                           class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm md:text-base"
+                           placeholder="Kun bo'yicha filter">
+                </div>
+                <!-- Oy bo'yicha filter -->
+                <div class="flex-1 md:max-w-[150px]">
+                    <input type="month" id="filter_month" name="filter_month" value="{{ request.GET.filter_month }}"
+                           class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm md:text-base"
+                           placeholder="Oy bo'yicha filter">
+                </div>
+                <button id="clear-filters" class="btn btn-secondary px-3 py-1 md:px-4 md:py-2 text-sm md:text-base">
+                    Tozalash
+                </button>
+                <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
+                    <!-- Excel eksport linkiga filtr parametrlarni qo‘shish -->
+                    <a href="{% url 'export_accounting_excel' %}?{% if search_query %}search={{ search_query }}&{% endif %}{% if payment_status %}status={{ payment_status }}&{% endif %}{% if request.GET.filter_date %}filter_date={{ request.GET.filter_date }}&{% endif %}{% if request.GET.filter_month %}filter_month={{ request.GET.filter_month }}{% endif %}"
+                       class="btn btn-primary px-3 py-1 md:px-4 md:py-2 text-sm md:text-base">Excel</a>
+                    <!-- PDF eksport linkiga filtr parametrlarni qo‘shish -->
+                    <a href="{% url 'export_accounting_pdf' %}?{% if search_query %}search={{ search_query }}&{% endif %}{% if payment_status %}status={{ payment_status }}&{% endif %}{% if request.GET.filter_date %}filter_date={{ request.GET.filter_date }}&{% endif %}{% if request.GET.filter_month %}filter_month={{ request.GET.filter_month }}{% endif %}"
+                       class="btn btn-primary px-3 py-1 md:px-4 md:py-2 text-sm md:text-base">PDF</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Jadval -->
+        <div class="overflow-x-auto">
+            <table class="table table-bordered w-full bg-white shadow-md rounded-lg table-accounting"
+                   id="accounting-table">
+                <thead>
+                <tr class="bg-gradient-to-r from-blue-600 to-blue-800 text-white text-xs md:text-sm">
+                    <th class="py-1 md:py-2 px-2 md:px-4 border-b">Buyurtma ID</th>
+                    <th class="py-1 md:py-2 px-2 md:px-4 border-b">Mijoz</th>
+                    <th class="py-1 md:py-2 px-2 md:px-4 border-b">Yo‘nalish</th>
+                    <th class="py-1 md:py-2 px-2 md:px-4 border-b">Sana</th>
+                    <th class="py-1 md:py-2 px-2 md:px-4 border-b">Manager Ismi</th>
+                    <th class="py-1 md:py-2 px-2 md:px-4 border-b">Manager Narxi</th>
+                    <th class="py-1 md:py-2 px-2 md:px-4 border-b">Dispecher Narxi</th>
+                    <th class="py-1 md:py-2 px-2 md:px-4 border-b">Dispecher Ismi</th>
+                    <th class="py-1 md:py-2 px-2 md:px-4 border-b">Firma Nomi</th>
+                    <th class="py-1 md:py-2 px-2 md:px-4 border-b">Firma INN</th>
+                    <th class="py-1 md:py-2 px-2 md:px-4 border-b">Boss/Bugalter Raqami</th>
+                    <th class="py-1 md:py-2 px-2 md:px-4 border-b">To‘lov Turi</th>
+                    <th class="py-1 md:py-2 px-2 md:px-4 border-b">Holati</th>
+                    {% if user.status == 'bugalter' %}
+                        <th class="py-1 md:py-2 px-2 md:px-4 border-b">Harakat</th>
+                    {% endif %}
+                </tr>
+                </thead>
+                <tbody id="accounting-list">
+                {% for entry in accounting_entries %}
+                    <tr class="border-b hover:bg-gray-50 transition-all duration-300 text-xs md:text-sm">
+                        <td class="py-1 md:py-2 px-2 md:px-4 order-id clickable"
+                            data-label="Buyurtma ID">{{ entry.order.order_id }}</td>
+                        <td class="py-1 md:py-2 px-2 md:px-4" data-label="Mijoz">{{ entry.order.client }}</td>
+                        <td class="py-1 md:py-2 px-2 md:px-4" data-label="Yo‘nalish">{{ entry.order.qayerdan }}
+                            - {{ entry.order.qayerga }}</td>
+                        <td class="py-1 md:py-2 px-2 md:px-4 time-diff"
+                            data-created="{{ entry.order.created_at|date:'c' }}"
+                            data-label="Sana">{{ entry.order.created_at|date:"Y-m-d H:i" }}</td>
+                        <td class="py-1 md:py-2 px-2 md:px-4"
+                            data-label="Manager Ismi">{{ entry.order.manager.full_name }}</td>
+                        <td class="py-1 md:py-2 px-2 md:px-4" data-label="Manager Narxi">{{ entry.manager_price }}</td>
+                        <td class="py-1 md:py-2 px-2 md:px-4"
+                            data-label="Dispecher Narxi">{{ entry.dispecher_price }}</td>
+                        <td class="py-1 md:py-2 px-2 md:px-4"
+                            data-label="Dispecher Ismi">{{ entry.order.closure.dispecher.full_name }}</td>
+                        <td class="py-1 md:py-2 px-2 md:px-4 cursor-pointer" data-label="Firma Nomi"
+                            onclick="navigator.clipboard.writeText('{{ entry.order.filter_data.firma_nomi }}'); alert('Firma nomi nusxalandi!')">
+                            {{ entry.order.filter_data.firma_nomi|default:"Noma'lum" }}
+                        </td>
+                        <td class="py-1 md:py-2 px-2 md:px-4 cursor-pointer" data-label="Firma INN"
+                            onclick="navigator.clipboard.writeText('{{ entry.order.filter_data.firma_inn }}'); alert('INN nusxalandi!')">
+                            {{ entry.order.filter_data.firma_inn|default:"Noma'lum" }}
+                        </td>
+                        <td class="py-1 md:py-2 px-2 md:px-4 cursor-pointer" data-label="Boss/Bugalter Raqami"
+                            onclick="window.location.href='tel:{{ entry.order.filter_data.boss_or_bugalter_number }}'">
+                            {{ entry.order.filter_data.boss_or_bugalter_number|default:"Noma'lum" }}
+                        </td>
+                        <td class="py-1 md:py-2 px-2 md:px-4" data-label="To‘lov Turi">{{ entry.payment_type }}</td>
+                        <td class="py-1 md:py-2 px-2 md:px-4 status-cell {% if entry.payment_status == 'jarayonda' %}status-jarayonda{% elif entry.payment_status == 'tolandi' %}status-tolandi{% endif %}"
+                            data-label="Holati">
+                            {{ entry.payment_status }}
+                        </td>
+                        {% if user.status == 'bugalter' %}
+                            <td class="py-1 md:py-2 px-2 md:px-4" data-label="Harakat">
+                                {% if entry.payment_status == 'jarayonda' %}
+                                    <button type="button" class="btn btn-success text-xs md:text-sm px-2 md:px-3 py-1"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#confirmPaymentModal-{{ entry.order.order_id }}">To‘landi
+                                    </button>
+                                {% else %}
+                                    <button type="button" class="btn btn-warning text-xs md:text-sm px-2 md:px-3 py-1"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#undoPaymentModal-{{ entry.order.order_id }}">Ortga
+                                        Qaytarish
+                                    </button>
+                                {% endif %}
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="{% if user.status == 'bugalter' %}14{% else %}13{% endif %}"
+                            class="py-2 px-4 text-center">Ma'lumot topilmadi
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-4 md:mt-6 flex flex-col md:flex-row justify-between items-center gap-2">
+            <div>
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&status={{ payment_status }}&filter_date={{ request.GET.filter_date }}&filter_month={{ request.GET.filter_month }}"
+                       class="btn btn-secondary px-3 py-1 md:px-4 md:py-2 text-sm md:text-base">Oldingi</a>
+                {% endif %}
+            </div>
+            <div class="text-sm md:text-base">
+                Sahifa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+            </div>
+            <div>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&status={{ payment_status }}&filter_date={{ request.GET.filter_date }}&filter_month={{ request.GET.filter_month }}"
+                       class="btn btn-secondary px-3 py-1 md:px-4 md:py-2 text-sm md:text-base">Keyingi</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Tasdiqlash Modali -->
+        {% for entry in accounting_entries %}
+            {% if user.status == 'bugalter' and entry.payment_status == 'jarayonda' %}
+                <div class="modal fade" id="confirmPaymentModal-{{ entry.order.order_id }}" tabindex="-1"
+                     aria-labelledby="confirmPaymentModalLabel-{{ entry.order.order_id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-sm md:modal-md">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title text-sm md:text-base"
+                                    id="confirmPaymentModalLabel-{{ entry.order.order_id }}">
+                                    Tasdiqlash</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-sm md:text-base">
+                                Haqiqatdan to‘laysizmi? (Buyurtma ID: {{ entry.order.order_id }})
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary text-xs md:text-sm px-2 md:px-3 py-1"
+                                        data-bs-dismiss="modal">Yo‘q
+                                </button>
+                                <a href="{% url 'mark_paid' entry.order.order_id %}"
+                                   class="btn btn-success text-xs md:text-sm px-2 md:px-3 py-1">Ha</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            {% if user.status == 'bugalter' and entry.payment_status == 'tolandi' %}
+                <div class="modal fade" id="undoPaymentModal-{{ entry.order.order_id }}" tabindex="-1"
+                     aria-labelledby="undoPaymentModalLabel-{{ entry.order.order_id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-sm md:modal-md">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title text-sm md:text-base"
+                                    id="undoPaymentModalLabel-{{ entry.order.order_id }}">
+                                    To‘lovni Bekor Qilish</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-sm md:text-base">
+                                To‘lovni bekor qilmoqchimisiz? (Buyurtma ID: {{ entry.order.order_id }})
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary text-xs md:text-sm px-2 md:px-3 py-1"
+                                        data-bs-dismiss="modal">Yo‘q
+                                </button>
+                                <a href="{% url 'undo_payment' entry.order.order_id %}"
+                                   class="btn btn-warning text-xs md:text-sm px-2 md:px-3 py-1">Ha</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Responsivlik uchun qo‘shimcha CSS -->
+    <style>
+        /* Filtr qismi uchun responsive sozlamalar */
+        @media (max-width: 768px) {
+            .flex-col.md\:flex-row {
+                flex-direction: column !important;
+            }
+
+            .flex-1, .md\:max-w-\[150px\] {
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+
+            .flex-col.md\:flex-row > div {
+                width: 100%;
+            }
+
+            input, select, button, a.btn {
+                font-size: 0.75rem !important;
+                padding: 0.5rem !important;
+            }
+
+            .space-y-2.md\:space-y-0.md\:space-x-2 {
+                flex-direction: column !important;
+                gap: 0.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .container {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+
+            h1 {
+                font-size: 1.25rem !important;
+                margin-bottom: 1rem !important;
+            }
+
+            input, select, button, a.btn {
+                font-size: 0.7rem !important;
+                padding: 0.4rem !important;
+            }
+        }
+
+        @media (max-width: 360px) {
+            input, select, button, a.btn {
+                font-size: 0.65rem !important;
+                padding: 0.3rem !important;
+            }
+        }
+
+        /* Jadval uchun responsive sozlamalar */
+        @media (max-width: 768px) {
+            .table-accounting, .table-accounting thead, .table-accounting tbody, .table-accounting th, .table-accounting td, .table-accounting tr {
+                display: block;
+            }
+
+            .table-accounting thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            .table-accounting tr {
+                margin-bottom: 0.5rem;
+                border: 1px solid #ddd;
+                border-radius: 0.5rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .table-accounting td {
+                border: none;
+                position: relative;
+                padding-left: 50% !important;
+                padding-right: 0.5rem !important;
+                padding-top: 0.25rem !important;
+                padding-bottom: 0.25rem !important;
+                font-size: 0.75rem;
+                display: flex;
+                align-items: center;
+                min-height: 2rem;
+            }
+
+            .table-accounting td:before {
+                position: absolute;
+                left: 0.5rem;
+                content: attr(data-label);
+                font-weight: bold;
+                white-space: nowrap;
+                font-size: 0.75rem;
+                color: #4b5563;
+            }
+
+            .table-accounting td button {
+                font-size: 0.65rem !important;
+                padding: 0.25rem 0.5rem !important;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .table-accounting td {
+                font-size: 0.7rem;
+                padding-left: 45% !important;
+            }
+
+            .table-accounting td:before {
+                font-size: 0.7rem;
+            }
+
+            .table-accounting td button {
+                font-size: 0.6rem !important;
+                padding: 0.2rem 0.4rem !important;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .table-accounting td {
+                font-size: 0.65rem;
+                padding-left: 40% !important;
+            }
+
+            .table-accounting td:before {
+                font-size: 0.65rem;
+            }
+
+            .table-accounting td button {
+                font-size: 0.55rem !important;
+                padding: 0.15rem 0.3rem !important;
+            }
+        }
+
+        /* Pagination uchun responsive sozlamalar */
+        @media (max-width: 768px) {
+            .mt-4.md\:mt-6 {
+                margin-top: 1rem !important;
+                gap: 0.5rem !important;
+            }
+
+            .btn.btn-secondary {
+                font-size: 0.75rem !important;
+                padding: 0.4rem 0.8rem !important;
+            }
+
+            .text-sm.md\:text-base {
+                font-size: 0.75rem !important;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .btn.btn-secondary {
+                font-size: 0.7rem !important;
+                padding: 0.3rem 0.6rem !important;
+            }
+
+            .text-sm.md\:text-base {
+                font-size: 0.7rem !important;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .btn.btn-secondary {
+                font-size: 0.65rem !important;
+                padding: 0.25rem 0.5rem !important;
+            }
+
+            .text-sm.md\:text-base {
+                font-size: 0.65rem !important;
+            }
+        }
+
+        /* Modal uchun responsive sozlamalar */
+        @media (max-width: 576px) {
+            .modal-dialog {
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto;
+            }
+
+            .modal-content {
+                padding: 0.5rem !important;
+                border-radius: 0.5rem !important;
+            }
+
+            .modal-header, .modal-body, .modal-footer {
+                padding: 0.5rem !important;
+            }
+
+            .modal-title {
+                font-size: 0.9rem !important;
+            }
+
+            .modal-body {
+                font-size: 0.8rem !important;
+            }
+
+            .btn-close {
+                width: 1.5rem !important;
+                height: 1.5rem !important;
+                font-size: 0.9rem !important;
+            }
+
+            .modal-footer .btn {
+                font-size: 0.7rem !important;
+                padding: 0.3rem 0.6rem !important;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .modal-title {
+                font-size: 0.85rem !important;
+            }
+
+            .modal-body {
+                font-size: 0.75rem !important;
+            }
+
+            .modal-footer .btn {
+                font-size: 0.65rem !important;
+                padding: 0.25rem 0.5rem !important;
+            }
+        }
+
+        /* Status ranglari */
+        .status-jarayonda {
+            color: #FFA500;
+            font-weight: bold;
+        }
+
+        .status-tolandi {
+            color: #008000;
+            font-weight: bold;
+        }
+    </style>
+
+    <!-- Filtrlar uchun JavaScript -->
+    <script>
+        function applyFilters() {
+            const searchText = document.getElementById('search').value.toLowerCase();
+            const filterStatus = document.getElementById('status').value;
+            const filterDate = document.getElementById('filter_date').value;
+            const filterMonth = document.getElementById('filter_month').value;
+
+            const rows = document.querySelectorAll('#accounting-list tr');
+
+            rows.forEach(row => {
+                // Qidiruv
+                const orderId = row.querySelector('.order-id').textContent.toLowerCase();
+                const client = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                const firmaNomi = row.querySelector('td:nth-child(9)').textContent.toLowerCase();
+                const matchesSearch = orderId.includes(searchText) || client.includes(searchText) || firmaNomi.includes(searchText);
+
+                // Status bo'yicha filtr
+                const status = row.querySelector('.status-cell').textContent.trim();
+                const matchesStatus = filterStatus === '' || status === filterStatus;
+
+                // Sana bo'yicha filtr
+                const createdAt = new Date(row.querySelector('.time-diff').getAttribute('data-created'));
+                let matchesDate = true;
+                if (filterDate) {
+                    const selectedDate = new Date(filterDate);
+                    matchesDate = createdAt.getFullYear() === selectedDate.getFullYear() &&
+                        createdAt.getMonth() === selectedDate.getMonth() &&
+                        createdAt.getDate() === selectedDate.getDate();
+                }
+
+                // Oy bo'yicha filtr
+                let matchesMonth = true;
+                if (filterMonth) {
+                    const [year, month] = filterMonth.split('-').map(Number);
+                    matchesMonth = createdAt.getFullYear() === year && (createdAt.getMonth() + 1) === month;
+                }
+
+                // Barcha shartlarni tekshirib, qatorni ko‘rsatish/yashirish
+                row.style.display = matchesSearch && matchesStatus && matchesDate && matchesMonth ? '' : 'none';
+            });
+        }
+
+        // Clear tugmasi uchun funksiya
+        document.getElementById('clear-filters').addEventListener('click', () => {
+            // Filtr maydonlarini tozalash
+            document.getElementById('search').value = '';
+            document.getElementById('status').value = '';
+            document.getElementById('filter_date').value = '';
+            document.getElementById('filter_month').value = '';
+
+            // Jadvalni dastlabki holatiga qaytarish
+            const rows = document.querySelectorAll('#accounting-list tr');
+            rows.forEach(row => {
+                row.style.display = ''; // Barcha qatorlarni ko‘rsatish
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Filtrlar uchun event listenerlar
+            document.getElementById('search').addEventListener('input', applyFilters);
+            document.getElementById('status').addEventListener('change', applyFilters);
+            document.getElementById('filter_date').addEventListener('change', applyFilters);
+            document.getElementById('filter_month').addEventListener('change', applyFilters);
+
+            // Dastlabki holatda filtr qo‘llash
+            applyFilters();
+        });
+    </script>
+{% endblock %}

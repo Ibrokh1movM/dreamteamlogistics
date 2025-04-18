@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mx-auto py-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Dashboard</h1>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold">Umumiy Buyurtmalar</h2>
+                <p class="text-3xl font-bold text-blue-600">{{ total_orders }}</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold">Ochiq Buyurtmalar</h2>
+                <p class="text-3xl font-bold text-green-600">{{ open_orders }}</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold">Yopilgan Buyurtmalar</h2>
+                <p class="text-3xl font-bold text-gray-600">{{ closed_orders }}</p>
+            </div>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mt-8 mb-4">So‘nggi Buyurtmalar</h2>
+        <div class="overflow-x-auto">
+            <table class="table table-bordered w-full bg-white shadow-md rounded-lg">
+                <thead>
+                <tr class="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+                    <th class="py-2 px-4 border-b">Buyurtma</th>
+                    <th class="py-2 px-4 border-b">Mijoz</th>
+                    <th class="py-2 px-4 border-b">Yo‘nalish</th>
+                    <th class="py-2 px-4 border-b">Holati</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for order in recent_orders %}
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="py-2 px-4" data-label="Buyurtma">{{ order.order_id }}</td>
+                        <td class="py-2 px-4" data-label="Mijoz">{{ order.client }}</td>
+                        <td class="py-2 px-4" data-label="Yo‘nalish">{{ order.qayerdan }} - {{ order.qayerga }}</td>
+                        <td class="py-2 px-4" data-label="Holati">
+                            {% if order.close_order_status %}
+                                <span class="text-gray-600 font-semibold">Yopilgan</span>
+                            {% else %}
+                                <span class="text-green-600 font-semibold">Ochiq</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Responsivlik uchun qo‘shimcha CSS -->
+    <style>
+        /* Responsive sozlamalar */
+        @media (max-width: 768px) {
+            .container {
+                padding-top: 1.5rem;
+                padding-bottom: 1.5rem;
+            }
+
+            .text-2xl {
+                font-size: 1.5rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 1.5rem;
+            }
+
+            .grid {
+                gap: 1.5rem;
+            }
+
+            .p-6 {
+                padding: 1.5rem;
+            }
+
+            .text-lg {
+                font-size: 1.1rem;
+            }
+
+            .text-3xl {
+                font-size: 1.75rem;
+            }
+
+            .text-xl {
+                font-size: 1.25rem;
+            }
+
+            .mt-8 {
+                margin-top: 2rem;
+            }
+
+            .mb-4 {
+                margin-bottom: 1rem;
+            }
+
+            /* Jadval uchun responsive sozlamalar */
+            .table, .table thead, .table tbody, .table th, .table td, .table tr {
+                display: block;
+            }
+
+            .table thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            .table tr {
+                margin-bottom: 0.5rem;
+                border: 1px solid #ddd;
+                border-radius: 0.5rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .table td {
+                border: none;
+                position: relative;
+                padding-left: 50% !important;
+                padding-right: 0.5rem !important;
+                padding-top: 0.25rem !important;
+                padding-bottom: 0.25rem !important;
+                font-size: 0.75rem;
+                display: flex;
+                align-items: center;
+                min-height: 2rem;
+            }
+
+            .table td:before {
+                position: absolute;
+                left: 0.5rem;
+                content: attr(data-label);
+                font-weight: bold;
+                weak-space: nowrap;
+                font-size: 0.75rem;
+                color: #4b5563;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .container {
+                padding-top: 1rem;
+                padding-bottom: 1rem;
+            }
+
+            .text-2xl {
+                font-size: 1.25rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 1rem;
+            }
+
+            .grid {
+                gap: 1rem;
+            }
+
+            .p-6 {
+                padding: 1rem;
+            }
+
+            .text-lg {
+                font-size: 1rem;
+            }
+
+            .text-3xl {
+                font-size: 1.5rem;
+            }
+
+            .text-xl {
+                font-size: 1.1rem;
+            }
+
+            .mt-8 {
+                margin-top: 1.5rem;
+            }
+
+            .mb-4 {
+                margin-bottom: 0.75rem;
+            }
+
+            .table td {
+                font-size: 0.7rem;
+                padding-left: 45% !important;
+            }
+
+            .table td:before {
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .container {
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+            }
+
+            .text-2xl {
+                font-size: 1.1rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 0.75rem;
+            }
+
+            .grid {
+                gap: 0.75rem;
+            }
+
+            .p-6 {
+                padding: 0.75rem;
+            }
+
+            .text-lg {
+                font-size: 0.9rem;
+            }
+
+            .text-3xl {
+                font-size: 1.25rem;
+            }
+
+            .text-xl {
+                font-size: 1rem;
+            }
+
+            .mt-8 {
+                margin-top: 1rem;
+            }
+
+            .mb-4 {
+                margin-bottom: 0.5rem;
+            }
+
+            .table td {
+                font-size: 0.65rem;
+                padding-left: 40% !important;
+            }
+
+            .table td:before {
+                font-size: 0.65rem;
+            }
+        }
+    </style>
+{% endblock %}

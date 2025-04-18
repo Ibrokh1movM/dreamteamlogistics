@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mx-auto py-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Menejerlar Statistikasi</h1>
+        <div class="mb-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+            <div class="w-full md:w-1/3">
+                <input type="text" id="manager-search" class="form-control w-full"
+                       placeholder="Menejer ismini qidirish...">
+            </div>
+            <div class="w-full md:w-1/4">
+                <select id="manager-filter" class="form-control w-full">
+                    <option value="all">Hammasi</option>
+                    <option value="tolandi">To‘langan</option>
+                    <option value="jarayonda">Jarayonda</option>
+                </select>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="table table-bordered w-full bg-white shadow-md rounded-lg">
+                <thead>
+                <tr class="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+                    <th class="py-2 px-4 border-b">Menejer Ismi</th>
+                    <th class="py-2 px-4 border-b">Umumiy Buyurtmalar</th>
+                    <th class="py-2 px-4 border-b">To‘langan</th>
+                    <th class="py-2 px-4 border-b">Jarayonda</th>
+                </tr>
+                </thead>
+                <tbody id="manager-stats-table">
+                <tr>
+                    <td colspan="4" class="text-center py-4">Yuklanmoqda...</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Responsivlik uchun qo‘shimcha CSS -->
+    <style>
+        /* Responsive sozlamalar */
+        @media (max-width: 768px) {
+            .container {
+                padding-top: 1.5rem;
+                padding-bottom: 1.5rem;
+            }
+
+            .text-2xl {
+                font-size: 1.5rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 1.5rem;
+            }
+
+            .mb-4 {
+                margin-bottom: 1rem;
+            }
+
+            .gap-4 {
+                gap: 1rem;
+            }
+
+            .w-full.md\:w-1\/3, .w-full.md\:w-1\/4 {
+                width: 100%;
+            }
+
+            input, select {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            /* Jadval uchun responsive sozlamalar */
+            .table, .table thead, .table tbody, .table th, .table td, .table tr {
+                display: block;
+            }
+
+            .table thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            .table tr {
+                margin-bottom: 0.5rem;
+                border: 1px solid #ddd;
+                border-radius: 0.5rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .table td {
+                border: none;
+                position: relative;
+                padding-left: 50% !important;
+                padding-right: 0.5rem !important;
+                padding-top: 0.25rem !important;
+                padding-bottom: 0.25rem !important;
+                font-size: 0.75rem;
+                display: flex;
+                align-items: center;
+                min-height: 2rem;
+            }
+
+            .table td:before {
+                position: absolute;
+                left: 0.5rem;
+                content: attr(data-label);
+                font-weight: bold;
+                white-space: nowrap;
+                font-size: 0.75rem;
+                color: #4b5563;
+            }
+
+            .table td[data-label="Menejer Ismi"] {
+                content: "Menejer Ismi";
+            }
+
+            .table td[data-label="Umumiy Buyurtmalar"] {
+                content: "Umumiy Buyurtmalar";
+            }
+
+            .table td[data-label="To‘langan"] {
+                content: "To‘langan";
+            }
+
+            .table td[data-label="Jarayonda"] {
+                content: "Jarayonda";
+            }
+        }
+
+        @media (max-width: 576px) {
+            .container {
+                padding-top: 1rem;
+                padding-bottom: 1rem;
+            }
+
+            .text-2xl {
+                font-size: 1.25rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 1rem;
+            }
+
+            .mb-4 {
+                margin-bottom: 0.75rem;
+            }
+
+            .gap-4 {
+                gap: 0.75rem;
+            }
+
+            input, select {
+                padding: 0.4rem;
+                font-size: 0.85rem;
+            }
+
+            .table td {
+                font-size: 0.7rem;
+                padding-left: 45% !important;
+            }
+
+            .table td:before {
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .container {
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+            }
+
+            .text-2xl {
+                font-size: 1.1rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 0.75rem;
+            }
+
+            .mb-4 {
+                margin-bottom: 0.5rem;
+            }
+
+            .gap-4 {
+                gap: 0.5rem;
+            }
+
+            input, select {
+                padding: 0.3rem;
+                font-size: 0.8rem;
+            }
+
+            .table td {
+                font-size: 0.65rem;
+                padding-left: 40% !important;
+            }
+
+            .table td:before {
+                font-size: 0.65rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        $(document).ready(function () {
+            function loadManagerStats() {
+                let filter = $("#manager-filter").val();
+                let search = $("#manager-search").val().toLowerCase();
+                $.ajax({
+                    url: "/users/api/manager-stats/",
+                    method: "GET",
+                    data: {filter: filter, search: search},
+                    success: function (data) {
+                        let statsHtml = '';
+                        if (data.error) {
+                            statsHtml = `<tr><td colspan="4" class="text-center py-4 text-red-500">${data.error}</td></tr>`;
+                        } else if (data.length === 0) {
+                            statsHtml = '<tr><td colspan="4" class="text-center py-4">Ma’lumotlar topilmadi.</td></tr>';
+                        } else {
+                            data.forEach(manager => {
+                                statsHtml += `
+                                    <tr class="border-b hover:bg-gray-50 transition-all duration-300">
+                                        <td class="py-2 px-4" data-label="Menejer Ismi">${manager.manager_name}</td>
+                                        <td class="py-2 px-4" data-label="Umumiy Buyurtmalar">${manager.total_orders}</td>
+                                        <td class="py-2 px-4" data-label="To‘langan">${manager.paid_orders}</td>
+                                        <td class="py-2 px-4" data-label="Jarayonda">${manager.pending_orders}</td>
+                                    </tr>
+                                `;
+                            });
+                        }
+                        $("#manager-stats-table").html(statsHtml);
+                    },
+                    error: function (xhr) {
+                        let errorMsg = 'Ma’lumotlarni yuklashda xatolik yuz berdi.';
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMsg = xhr.responseJSON.error;
+                        }
+                        $("#manager-stats-table").html(`<tr><td colspan="4" class="text-center py-4 text-red-500">${errorMsg}</td></tr>`);
+                    }
+                });
+            }
+
+            // Dastlabki yuklash
+            loadManagerStats();
+
+            // Filter va search o'zgarishlarini kuzatish
+            $("#manager-filter, #manager-search").on("change keyup", function () {
+                loadManagerStats();
+            });
+        });
+    </script>
+{% endblock %}

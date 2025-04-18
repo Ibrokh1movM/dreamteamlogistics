@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mx-auto py-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Buyurtmani Tahrirlash (ID: {{ order.order_id }})</h1>
+        <div class="bg-white shadow-md rounded-lg p-6">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="qayerdan">Qayerdan</label>
+                    <input type="text" name="qayerdan" id="qayerdan" class="form-control" value="{{ order.qayerdan }}"
+                           required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="qayerga">Qayerga</label>
+                    <input type="text" name="qayerga" id="qayerga" class="form-control" value="{{ order.qayerga }}"
+                           required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="client">Mijoz</label>
+                    <input type="text" name="client" id="client" class="form-control" value="{{ order.client }}"
+                           required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="price">Narx</label>
+                    <input type="number" name="price" id="price" class="form-control" step="0.01"
+                           value="{{ order.price }}" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="description">Tavsif</label>
+                    <textarea name="description" id="description"
+                              class="form-control">{{ order.description }}</textarea>
+                </div>
+                <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4">
+                    <button type="submit" class="btn btn-primary">Saqlash</button>
+                    <a href="/" class="btn btn-secondary">Bekor Qilish</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Responsivlik uchun qo‘shimcha CSS -->
+    <style>
+        /* Responsive sozlamalar */
+        @media (max-width: 768px) {
+            .container {
+                padding-top: 1.5rem;
+                padding-bottom: 1.5rem;
+            }
+
+            .text-2xl {
+                font-size: 1.5rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 1.5rem;
+            }
+
+            .p-6 {
+                padding: 1.5rem;
+            }
+
+            .mb-4 {
+                margin-bottom: 1rem;
+            }
+
+            .text-sm {
+                font-size: 0.8rem;
+            }
+
+            input, textarea {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            textarea {
+                min-height: 80px;
+            }
+
+            .space-x-4 > :not([hidden]) ~ :not([hidden]) {
+                margin-left: 1rem;
+            }
+
+            .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+                margin-top: 0.75rem;
+            }
+
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .container {
+                padding-top: 1rem;
+                padding-bottom: 1rem;
+            }
+
+            .text-2xl {
+                font-size: 1.25rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 1rem;
+            }
+
+            .p-6 {
+                padding: 1rem;
+            }
+
+            .mb-4 {
+                margin-bottom: 0.75rem;
+            }
+
+            .text-sm {
+                font-size: 0.75rem;
+            }
+
+            input, textarea {
+                padding: 0.4rem;
+                font-size: 0.85rem;
+            }
+
+            textarea {
+                min-height: 60px;
+            }
+
+            .space-x-4 > :not([hidden]) ~ :not([hidden]) {
+                margin-left: 0.75rem;
+            }
+
+            .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+                margin-top: 0.5rem;
+            }
+
+            .btn {
+                padding: 0.4rem 0.75rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .container {
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+            }
+
+            .text-2xl {
+                font-size: 1.1rem;
+            }
+
+            .mb-6 {
+                margin-bottom: 0.75rem;
+            }
+
+            .p-6 {
+                padding: 0.75rem;
+            }
+
+            .mb-4 {
+                margin-bottom: 0.5rem;
+            }
+
+            .text-sm {
+                font-size: 0.7rem;
+            }
+
+            input, textarea {
+                padding: 0.3rem;
+                font-size: 0.8rem;
+            }
+
+            textarea {
+                min-height: 50px;
+            }
+
+            .space-x-4 > :not([hidden]) ~ :not([hidden]) {
+                margin-left: 0.5rem;
+            }
+
+            .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+                margin-top: 0.3rem;
+            }
+
+            .btn {
+                padding: 0.3rem 0.5rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+{% endblock %}

@@ -1,0 +1,514 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="chat-container">
+        <h1 class="chat-title">Chat</h1>
+
+        {% if user.is_authenticated %}
+            <!-- Xabarlar ro'yxati -->
+            <div class="messages-box">
+                {% for message in messages %}
+                    <div class="message {% if message.user == user %}self{% else %}other{% endif %}">
+                        <div class="message-header">
+                            <span class="user-name">{{ message.user.username }}</span>
+                            <span class="message-time">{{ message.created_at|date:"H:i, d.m.Y" }}</span>
+                        </div>
+                        <div class="message-content">{{ message.content }}</div>
+                    </div>
+                {% empty %}
+                    <p class="no-messages">Hozircha xabarlar yo'q.</p>
+                {% endfor %}
+            </div>
+
+            <!-- Xabar yuborish formasi -->
+            <form method="post" action="{% url 'post_chat_message' %}" class="chat-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <textarea name="content" placeholder="Xabar yozing..." required
+                              class="form-input message-input"></textarea>
+                    <button type="submit" class="submit-btn">
+                        <svg class="send-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+        {% else %}
+            <div class="auth-required">
+                <p>Iltimos, chatdan foydalanish uchun tizimga kiring.</p>
+                <a href="{% url 'custom_login' %}" class="login-btn">Kirish</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <style>
+        .chat-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-title {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .messages-box {
+            flex: 1;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 18px;
+            border-radius: 15px;
+            max-width: 70%;
+            word-wrap: break-word;
+            position: relative;
+            transition: transform 0.2s ease;
+        }
+
+        .message:hover {
+            transform: translateY(-2px);
+        }
+
+        .message.self {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.other {
+            background: #e9ecef;
+            color: #333;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .message.self .user-name {
+            color: #dfefff;
+        }
+
+        .message.other .user-name {
+            color: #007bff;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: #adb5bd;
+        }
+
+        .message-content {
+            font-size: 1rem;
+            line-height: 1.4;
+        }
+
+        .no-messages {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            font-size: 1rem;
+        }
+
+        .chat-form {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border-radius: 25px;
+            padding: 5px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .form-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 20px;
+            font-size: 1rem;
+            outline: none;
+            background: transparent;
+            resize: none;
+            height: 40px;
+            line-height: 1.4;
+        }
+
+        .form-input:focus {
+            background: #f8f9fa;
+        }
+
+        .submit-btn {
+            background: #007bff;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background: #0056b3;
+        }
+
+        .send-icon {
+            width: 20px;
+            height: 20px;
+            stroke: white;
+        }
+
+        .auth-required {
+            text-align: center;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .auth-required p {
+            font-size: 1.2rem;
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+
+        .login-btn {
+            display: inline-block;
+            padding: 10px 25px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            transition: background 0.3s ease;
+        }
+
+        .login-btn:hover {
+            background: #0056b3;
+        }
+
+        /* Scrollbar dizayni */
+        .messages-box::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages-box::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .messages-box::-webkit-scrollbar-thumb {
+            background: #007bff;
+            border-radius: 10px;
+        }
+
+        .messages-box::-webkit-scrollbar-thumb:hover {
+            background: #0056b3;
+        }
+
+        /* Responsive sozlamalar */
+        @media (max-width: 768px) {
+            .chat-container {
+                padding: 15px;
+                min-height: 60vh;
+                border-radius: 10px;
+            }
+
+            .chat-title {
+                font-size: 1.75rem;
+                margin-bottom: 20px;
+                letter-spacing: 1px;
+            }
+
+            .messages-box {
+                max-height: 350px;
+                padding: 15px;
+                margin-bottom: 15px;
+                border-radius: 8px;
+            }
+
+            .message {
+                max-width: 85%;
+                padding: 10px 14px;
+                margin-bottom: 10px;
+            }
+
+            .user-name {
+                font-size: 0.8rem;
+            }
+
+            .message-time {
+                font-size: 0.65rem;
+            }
+
+            .message-content {
+                font-size: 0.9rem;
+            }
+
+            .no-messages {
+                font-size: 0.9rem;
+            }
+
+            .form-input {
+                padding: 8px 10px;
+                font-size: 0.9rem;
+                height: 35px;
+            }
+
+            .submit-btn {
+                width: 35px;
+                height: 35px;
+            }
+
+            .send-icon {
+                width: 16px;
+                height: 16px;
+            }
+
+            .chat-form {
+                border-radius: 20px;
+                padding: 4px;
+            }
+
+            .auth-required {
+                padding: 20px;
+                border-radius: 8px;
+            }
+
+            .auth-required p {
+                font-size: 1rem;
+                margin-bottom: 15px;
+            }
+
+            .login-btn {
+                padding: 8px 20px;
+                font-size: 0.9rem;
+                border-radius: 20px;
+            }
+
+            .messages-box::-webkit-scrollbar {
+                width: 6px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .chat-container {
+                padding: 10px;
+                min-height: 50vh;
+                border-radius: 8px;
+            }
+
+            .chat-title {
+                font-size: 1.5rem;
+                margin-bottom: 15px;
+                letter-spacing: 0.5px;
+            }
+
+            .messages-box {
+                max-height: 300px;
+                padding: 10px;
+                margin-bottom: 10px;
+                border-radius: 6px;
+            }
+
+            .message {
+                max-width: 90%;
+                padding: 8px 12px;
+                margin-bottom: 8px;
+            }
+
+            .user-name {
+                font-size: 0.75rem;
+            }
+
+            .message-time {
+                font-size: 0.6rem;
+            }
+
+            .message-content {
+                font-size: 0.85rem;
+            }
+
+            .no-messages {
+                font-size: 0.85rem;
+            }
+
+            .form-input {
+                padding: 6px 8px;
+                font-size: 0.85rem;
+                height: 30px;
+            }
+
+            .submit-btn {
+                width: 30px;
+                height: 30px;
+            }
+
+            .send-icon {
+                width: 14px;
+                height: 14px;
+            }
+
+            .chat-form {
+                border-radius: 18px;
+                padding: 3px;
+            }
+
+            .auth-required {
+                padding: 15px;
+                border-radius: 6px;
+            }
+
+            .auth-required p {
+                font-size: 0.9rem;
+                margin-bottom: 10px;
+            }
+
+            .login-btn {
+                padding: 6px 15px;
+                font-size: 0.85rem;
+                border-radius: 18px;
+            }
+
+            .messages-box::-webkit-scrollbar {
+                width: 5px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .chat-container {
+                padding: 8px;
+                min-height: 40vh;
+                border-radius: 6px;
+            }
+
+            .chat-title {
+                font-size: 1.25rem;
+                margin-bottom: 10px;
+                letter-spacing: 0.3px;
+            }
+
+            .messages-box {
+                max-height: 250px;
+                padding: 8px;
+                margin-bottom: 8px;
+                border-radius: 5px;
+            }
+
+            .message {
+                max-width: 95%;
+                padding: 6px 10px;
+                margin-bottom: 6px;
+            }
+
+            .user-name {
+                font-size: 0.7rem;
+            }
+
+            .message-time {
+                font-size: 0.55rem;
+            }
+
+            .message-content {
+                font-size: 0.8rem;
+            }
+
+            .no-messages {
+                font-size: 0.8rem;
+            }
+
+            .form-input {
+                padding: 5px 7px;
+                font-size: 0.8rem;
+                height: 28px;
+            }
+
+            .submit-btn {
+                width: 28px;
+                height: 28px;
+            }
+
+            .send-icon {
+                width: 12px;
+                height: 12px;
+            }
+
+            .chat-form {
+                border-radius: 16px;
+                padding: 2px;
+            }
+
+            .auth-required {
+                padding: 10px;
+                border-radius: 5px;
+            }
+
+            .auth-required p {
+                font-size: 0.85rem;
+                margin-bottom: 8px;
+            }
+
+            .login-btn {
+                padding: 5px 12px;
+                font-size: 0.8rem;
+                border-radius: 16px;
+            }
+
+            .messages-box::-webkit-scrollbar {
+                width: 4px;
+            }
+        }
+    </style>
+
+    <script>
+        // Xabarlar ro'yxatini pastga aylantirish
+        const messagesBox = document.querySelector('.messages-box');
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+
+        // Textarea balandligini avtomatik sozlash
+        const textarea = document.querySelector('.message-input');
+        textarea.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = `${this.scrollHeight}px`;
+        });
+    </script>
+{% endblock %}

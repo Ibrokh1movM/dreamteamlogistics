@@ -1,0 +1,38 @@
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+.env
+*.env
+
+# Django
+*.log
+debug.log
+*.pot
+*.py[cod]
+*.sqlite3
+migrations/
+*.migration
+staticfiles/
+media/
+
+# IDE va muharrirlar
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Operatsion tizim
+.DS_Store
+Thumbs.db
+
+# Boshqa
+*.bak
+*.swp
+*.swo
+*.tmp
