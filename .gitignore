@@ -18,7 +18,6 @@ debug.log
 *.sqlite3
 migrations/
 *.migration
-staticfiles/
 media/
 
 # IDE va muharrirlar
