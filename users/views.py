@@ -20,7 +20,6 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 import json
 import logging
-import pyttsx3
 import threading
 from django.core.paginator import Paginator
 from reportlab.lib import colors
@@ -33,22 +32,21 @@ import io
 
 logger = logging.getLogger(__name__)
 
+from gtts import gTTS
+import os
+import tempfile
+import threading
 
 def speak_local(text):
     def run_speech():
-        engine = pyttsx3.init()
-        engine.setProperty('rate', 140)
-        engine.setProperty('volume', 1.0)
-        voices = engine.getProperty('voices')
-        for voice in voices:
-            if 'zira' in voice.name.lower() or 'female' in voice.name.lower():
-                engine.setProperty('voice', voice.id)
-                break
-        engine.say(text)
-        engine.runAndWait()
+        tts = gTTS(text=text, lang='en')
+        with tempfile.NamedTemporaryFile(delete=True, suffix=".mp3") as fp:
+            tts.save(fp.name)
+            os.system(f"mpg123 {fp.name}")  # yoki afplay, mplayer
 
     thread = threading.Thread(target=run_speech)
     thread.start()
+
 
 
 def custom_login_view(request):
